@@ -60,7 +60,7 @@ func (cache *Cache[K, V]) Get(key K) (V, bool) {
 
 // Delete deletes an entry with key Key from the cache.
 func (cache *Cache[K, V]) Delete(key K) {
-	cache.Delete(key)
+	cache.store.Delete(key)
 }
 
 // Clear deletes all entries in the cache.

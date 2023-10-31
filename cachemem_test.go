@@ -71,7 +71,19 @@ func TestGet_KeyNotExists(t *testing.T) {
 	}
 }
 
-func TestTruncate(t *testing.T) {
+func TestDelete(t *testing.T) {
+	cache := New[uint32, bool]()
+
+	cache.Set(1, true)
+	cache.Delete(1)
+
+	actual := cache.Len()
+	if actual != 0 {
+		t.Fatalf("expected 0 entries in cache")
+	}
+}
+
+func TestClear(t *testing.T) {
 	cache := New[int, uint]()
 	cache.Set(1, 10)
 	cache.Set(2, 20)
