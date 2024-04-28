@@ -1,9 +1,8 @@
 # cache-mem
 ![example workflow](https://github.com/j-dumbell/cache-mem/actions/workflows/test-build.yml/badge.svg?branch=main)
 
-A concurrency-safe, strongly typed, in-memory cache in Golang.  Cache entries
-may optionally be given an expiry time, and are automatically deleted from the
-cache after expiry.
+A concurrency-safe, strongly typed, in-memory cache in Golang.  Cache records
+can be configured to expire and automatically deleted.
 
 ## Installation
 ```shell
@@ -13,30 +12,56 @@ go get github.com/j-dumbell/cache-mem
 ## Example
 ```go
 import (
+    "fmt"
     "time"
+    
     "github.com/j-dumbell/cachemem"
 )
 
+// implements Fetcher
+type DummyFetcher struct {
+}
+
+func (f *DummyFetcher) FetchOne(i int) (string, error) {
+    return "", nil
+}
+
+func (f *DummyFetcher) FetchMany(arrI []int) ([]string, error) {
+    return []string{}, nil
+}
+
+func getKey(v string) int {
+    return 0
+}
+
 func main() {
+    fetcher := DummyFetcher{}
+    
     // initialize a new cache with int keys and string values
-    cache := New[int, string]()
+    cache := cachemem.New[int, string](&fetcher, getKey, time.Minute)
     
-    // Set a new entry with key 1 and value 'hello'
-    cache.Set(1, "hello")
+    // Set a new record with an expiry of 1 hour
+    cache.Set("123", time.Hour)
     
-    // Set a new entry with an expiry time of 10 seconds
-    cache.SetWithExpiry(2, "world", time.Seconds * 10)
+    // Get a record from the cache
+    record, ok := cache.Get(1)
     
-    // Get a cache entry with a key of 1
-    value, ok := cache.Get(1)
+    // Get a record from the cache if it exists, otherwise fetch it.
+    record, err := cache.GetOrFetch(2, time.Minute)
     
-    // The number of entries in the cache
+    // The number of records in the cache
     cacheLength := cache.Len()
     
-    // Deletes the cache entry with key 1
+    // Delete a cache record by key
     cache.Delete(1)
     
     // Delete all entries from the cache
-    cache.Clear()	
+    cache.Clear()
+    
+    // Start deleting expired records
+    go cache.StartCleaning()
+    
+    // Stop deleting expired records
+    cache.StopCleaning()
 }
 ```
